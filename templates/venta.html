@@ -1,0 +1,17 @@
+
+<html>
+  <body>
+    <h1>Add Errors</h1>
+    <form method="POST" action="/">
+        <input type="text" name="title">
+        <input type="submit" value="Add">
+    </form>
+	
+    <h1>Errors</h1>
+    {% for book in books %}
+	<p>{{error.title}}</p>
+  	</form>
+    {% endfor %}
+  </body>
+</html>
+
