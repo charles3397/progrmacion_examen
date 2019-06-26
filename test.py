@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
 import os
 
@@ -16,16 +16,33 @@ db = SQLAlchemy(app)
 
 class User(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
-	public_id = db.Column(db.String(50),unique=True)
-	name = db.Column(db.String(50))
-	password = db.Column(db.String(80))
-	admin = db.Column(db.Boolean)
-
-class Todo(db.Model):
+	nombre = db.Column(db.String(80))
+	apellido = db.Column(db.String(80))
+	cards = db.relationship('Card', backref='owner')
+	
+class Card(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
-	text = db.Column(db.String(50))
-	complete = db.Column(db.Boolean)
-	user_id = db.Column(db.Integer)
+	numero = db.Column(db.Integer,unique = True)
+	codseguridad = db.Column(db.Integer)
+	vencimiento = db.Column(db.Integer)
+	montoMaximo = db.Column(db.Float)
+	user_id = db.Column(db.Integer,db.ForeignKey("user.id"))
+
+#class Venta(db.Model):
+	
+
+@app.route("/", methods=["GET","POST"])
+def home():
+	if request.form:
+        	user = User(nombre=request.form.get("prenom"),apellido=request.form.get("nom"))
+        	db.session.add(user)
+        	db.session.commit()
+	books = User.query.all()
+	return render_template("test.html",books=books)
+
+@app.route("/venta", methods=["GET","POST"])
+def venta():
+	return render_template("venta.html")
 
 
 if __name__ == '__main__':

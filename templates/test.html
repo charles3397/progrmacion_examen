@@ -1,10 +1,20 @@
 
 <html>
   <body>
-    <h1>Add Errors</h1>
+    <h1>Add User</h1>
     <form method="POST" action="/">
-        <input type="text" name="title">
+        <input type="text" name="prenom">
+	<input type="text" name="nom">
         <input type="submit" value="Add">
     </form>
+    <form method="POST" action="/venta">
+	<input type="submit" value="Venta">
+    </form>
+
+    <h1>Books</h1>
+    {% for book in books %}
+  	<p>{{book.nombre,book.apellido,book.id}}</p>
+    {% endfor %}
+  </body>
 </html>
 
