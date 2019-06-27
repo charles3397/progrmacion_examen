@@ -1,0 +1,36 @@
+
+<html>
+  <body>
+    <h1>Add New Card</h1>
+    <form method="POST" action="/card">
+        <input type="text" name="numero">
+	<input type="text" name="codseguridad">
+	<input type="text" name="vencimiento">
+	<input type="text" name="montoMaximo">
+        <input type="submit" value="Add">
+    </form>
+    <h1>All your cards</h1>
+    {% for book in books %}
+  	<p>card {{book.id}} :</p>
+  	<form method="POST" action="/card/update">
+    		<input type="hidden" value="{{book.numero}}" name="oldnumero">
+    		<input type="text" value="{{book.numero}}" name="newnumero">
+		<input type="hidden" value="{{book.codseguridad}}" name="oldcodseguridad">
+    		<input type="text" value="{{book.codseguridad}}" name="newcodseguridad">
+		<input type="hidden" value="{{book.vencimiento}}" name="oldvencimiento">
+    		<input type="text" value="{{book.vencimiento}}" name="newvencimiento">
+		<input type="hidden" value="{{book.montoMaximo}}" name="oldmontoMaximo">
+    		<input type="text" value="{{book.montoMaximo}}" name="newmontoMaximo">
+    		<input type="submit" value="Update">
+  	</form>
+	<form method="POST" action="/card/delete">
+		<input type="hidden" value="{{book.numero}}" name="numero">
+		<input type="hidden" value="{{book.codseguridad}}" name="codseguridad">
+		<input type="hidden" value="{{book.vencimiento}}" name="vencimiento">
+		<input type="hidden" value="{{book.montoMaximo}}" name="montoMaximo">
+		<input type="submit" value="Delete">
+	</form>
+    {% endfor %}
+  </body>
+</html>
+

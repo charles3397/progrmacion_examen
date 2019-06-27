@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, make_response, Response
 from flask_sqlalchemy import SQLAlchemy
 import os
+from functools import wraps
+from flask_login import LoginManager, UserMixin, login_user,logout_user, login_required, current_user
 
 
 app = Flask(__name__)
@@ -13,8 +15,10 @@ app.config['SECRET_KEY'] = 'secretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////home/bastien/Desktop/programacion/projecto_final/progrmacion_examen/test.db"
 
 db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-class User(db.Model):
+class User(UserMixin,db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	nombre = db.Column(db.String(80))
 	apellido = db.Column(db.String(80))
@@ -29,7 +33,78 @@ class Card(db.Model):
 	user_id = db.Column(db.Integer,db.ForeignKey("user.id"))
 
 #class Venta(db.Model):
+
+@login_manager.user_loader
+def load_user(user_id):
+	return User.query.get(int(user_id))
+
+@app.route('/login')
+def index():
+	user = User.query.filter_by(id=1).first()
+	if user :	
+		login_user(user)
+		return "you are now logged in"
+	else :
+		return "jambon"
+@app.route('/logout')
+@login_required
+def logout():
+	logout_user()
+	return "you are logged out!"
+
+@app.route("/who")
+@login_required
+def who():
+	return "the current user is " + current_user.nombre
+
+
 	
+
+@app.route("/card", methods=["GET","POST"])
+@login_required
+def add_card():
+	user = current_user
+	if request.form.get("numero") and request.form.get("codseguridad") and request.form.get("vencimiento") and request.form.get("montoMaximo"):
+		card = Card(numero=request.form.get("numero"),codseguridad=request.form.get("codseguridad"),vencimiento=request.form.get("vencimiento"),montoMaximo=request.form.get("montoMaximo"),user_id=user.id)
+		db.session.add(card)
+		db.session.commit()	
+	books = Card.query.filter_by(user_id=user.id)
+	return render_template("card.html",books=books)
+
+
+
+	
+@app.route("/card/update", methods=["POST"])
+def update():
+	newnumero = request.form.get("newnumero")
+	oldnumero = request.form.get("oldnumero")
+	card = Card.query.filter_by(numero=oldnumero).first()
+	card.numero = newnumero
+	newcodseguridad = request.form.get("newcodseguridad")
+	oldcodseguridad = request.form.get("oldcodseguridad")
+	card = Card.query.filter_by(codseguridad=oldcodseguridad).first()
+	card.codseguridad = newcodseguridad
+	newvencimiento = request.form.get("newvencimiento")
+	oldvencimiento = request.form.get("oldvencimiento")
+	card = Card.query.filter_by(vencimiento=oldvencimiento).first()
+	card.vencimiento = newvencimiento
+	newmontoMaximo = request.form.get("newmontoMaximo")
+	oldmontoMaximo = request.form.get("oldmontoMaximo")
+	card = Card.query.filter_by(montoMaximo=oldmontoMaximo).first()
+	card.montoMaximo = newmontoMaximo
+	db.session.commit()
+	return redirect("/card")
+
+
+@app.route("/card/delete", methods=["POST"])
+def delete_card():
+    numero = request.form.get("numero")
+    card = Card.query.filter_by(numero=numero).first()
+    db.session.delete(card)
+    db.session.commit()
+    return redirect("/card")
+
+
 
 @app.route("/", methods=["GET","POST"])
 def home():
@@ -40,7 +115,30 @@ def home():
 	books = User.query.all()
 	return render_template("test.html",books=books)
 
+
+
+
+def check_auth(username, password):
+	return username == 'admin' and password == 'secret'
+
+def authenticate():
+	return Response('Could not verify your access level for that URL.\n''You have to login with proper credentials', 401,{'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+
+def requires_auth(f):
+	@wraps(f)
+	def decorated(*args, **kwargs):
+		auth = request.authorization
+		if not auth or not check_auth(auth.username, auth.password):
+			return authenticate()
+		return f(*args, **kwargs)
+	return decorated
+
+
+
+
 @app.route("/venta", methods=["GET","POST"])
+@login_required
 def venta():
 	return render_template("venta.html")
 
