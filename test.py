@@ -35,7 +35,6 @@ class Card(db.Model):
 
 class Venta(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
-	user_id = db.Column(db.Integer,db.ForeignKey("user.id"))
 	card_id = db.Column(db.Integer,db.ForeignKey("card.id"))
 	monto = db.Column(db.Integer)
 	
@@ -51,7 +50,7 @@ def index():
 		login_user(user)
 		return "you are now logged in"
 	else :
-		return "jambon"
+		return "you're not logged"
 @app.route('/logout')
 @login_required
 def logout():
