@@ -1,54 +1,40 @@
 #!/usr/bin/python3
 
-import os
-
-from flask import Flask , render_template , request, redirect
+from flask import Flask, request, jsonify, render_template, redirect, make_response, Response
 from flask_sqlalchemy import SQLAlchemy
-
-
-project_dir = os.path.dirname(os.path.abspath(__file__))
-database_file = "sqlite:///{}".format(os.path.join(project_dir,"bookdatabase.db"))
-
+import os
+from functools import wraps
+from flask_login import LoginManager, UserMixin, login_user,logout_user, login_required, current_user
+import datetime, time
+from test import User, Card
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = database_file
+
+#project_dir = os.path.dirname(os.path.abspath(__file__))
+app.config['SECRET_KEY'] = 'secretkey'
+#database_file = "sqlite:///{}".format(os.path.join(project_dir,"test.db"))
+app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////home/bastien/Desktop/programacion/projecto_final/progrmacion_examen/test.db"
 
 db = SQLAlchemy(app)
 
-class Book(db.Model):
-	title = db.Column(db.String(80), unique=True, nullable=False, primary_key=True)
+def compare_date(year1,month1,year2,month2):
+	
 
-	def __repr__(self):
-	    	return "<Title: {}>".format(self.title)
+@app.route("/tarjeta", methods = ["GET","POST"] )
+def tarjeta():
+	value = request.json["tarjeta"]
+	card = Card.query.filter_by(id = value).first()
+	if not card :
+		return jsonify({'error':"pas de carte"})
+	return jsonify({'vencimiento':card.vencimiento})
+	card_year = card.vencimiento[:4]
+	card_month = card.vencimiento[4:]
+	date = datetime.date.today()	
+	if card :
+		return jsonify({'vencimiento':card.vencimiento})
+	return value
 
 
-@app.route("/", methods=["GET","POST"])
-def home():
-	if request.form:
-        	book = Book(title=request.form.get("title"))
-        	db.session.add(book)
-        	db.session.commit()
-	books = Book.query.all()
-	return render_template("home.html",books=books)
-
-@app.route("/update", methods=["POST"])
-def update():
-	newtitle = request.form.get("newtitle")
-	oldtitle = request.form.get("oldtitle")
-	book = Book.query.filter_by(title=oldtitle).first()
-	book.title = newtitle
-	db.session.commit()
-	return redirect("/")
-
-@app.route("/delete", methods=["POST"])
-def delete():
-    title = request.form.get("title")
-    book = Book.query.filter_by(title=title).first()
-    db.session.delete(book)
-    db.session.commit()
-    return redirect("/")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
 	app.run(debug=True)
-
 

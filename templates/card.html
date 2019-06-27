@@ -30,6 +30,9 @@
 		<input type="hidden" value="{{book.montoMaximo}}" name="montoMaximo">
 		<input type="submit" value="Delete">
 	</form>
+	<form method="POST" action="/buy{{book.id}}">
+		<input type="submit" name="buy" value="Buy with this card">	
+	</form>
     {% endfor %}
   </body>
 </html>

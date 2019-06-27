@@ -22,7 +22,7 @@ class User(UserMixin,db.Model):
 	id = db.Column(db.Integer, primary_key=True)
 	nombre = db.Column(db.String(80))
 	apellido = db.Column(db.String(80))
-	cards = db.relationship('Card', backref='owner')
+	cards = db.relationship('Card', backref='user')
 	
 class Card(db.Model):
 	id = db.Column(db.Integer, primary_key=True)
@@ -31,9 +31,15 @@ class Card(db.Model):
 	vencimiento = db.Column(db.Integer)
 	montoMaximo = db.Column(db.Float)
 	user_id = db.Column(db.Integer,db.ForeignKey("user.id"))
+	ventas = db.relationship('Venta',backref='card')
 
-#class Venta(db.Model):
-
+class Venta(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	user_id = db.Column(db.Integer,db.ForeignKey("user.id"))
+	card_id = db.Column(db.Integer,db.ForeignKey("card.id"))
+	monto = db.Column(db.Integer)
+	
+	
 @login_manager.user_loader
 def load_user(user_id):
 	return User.query.get(int(user_id))
@@ -104,9 +110,11 @@ def delete_card():
     db.session.commit()
     return redirect("/card")
 
-
-
 @app.route("/", methods=["GET","POST"])
+def front():
+	return render_template("front.html")
+
+@app.route("/admin/user", methods=["GET","POST"])
 def home():
 	if request.form:
         	user = User(nombre=request.form.get("prenom"),apellido=request.form.get("nom"))
@@ -119,13 +127,13 @@ def home():
 
 
 def check_auth(username, password):
-	return username == 'admin' and password == 'secret'
+	return username == 'admin' and password == 'admin'
 
 def authenticate():
 	return Response('Could not verify your access level for that URL.\n''You have to login with proper credentials', 401,{'WWW-Authenticate': 'Basic realm="Login Required"'})
 
 
-def requires_auth(f):
+def requires_admin(f):
 	@wraps(f)
 	def decorated(*args, **kwargs):
 		auth = request.authorization
@@ -138,9 +146,17 @@ def requires_auth(f):
 
 
 @app.route("/venta", methods=["GET","POST"])
-@login_required
+@requires_admin
 def venta():
 	return render_template("venta.html")
+
+@app.route("/buy<id>", methods=["GET","POST"])
+@login_required
+def buy(id):
+	card = Card.query.filter_by(id=int(id)).first()
+	if not card :
+		return jsonify({'message':'No card found'})
+	return jsonify({'cliente':card.user_id,'numero':card.numero,'monto':1000})
 
 
 if __name__ == '__main__':
